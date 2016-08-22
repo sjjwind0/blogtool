@@ -141,17 +141,12 @@ func (p *PushCommand) buildAtomMarkDownHtmlFile(newPath, htmlPath string, uuid s
 	f.Read(byteContent)
 	stringContent := string(byteContent)
 
-	// 处理css
-	beginStyle := strings.Index(stringContent, "<style>")
-	endStyle := strings.Index(stringContent, "</style>") + len("</style>")
-
-	lastPart := stringContent[endStyle:]
-	lastStyleBegin := strings.Index(lastPart, `<link rel="stylesheet" href="`)
-	lastStyleEnd := strings.Index(lastPart, ">") + 1
-	lastPart = lastPart[:lastStyleBegin] + `<link rel="stylesheet" href="/css/katex.min.css">` + lastPart[lastStyleEnd:]
-
-	insertHtml := `<link rel="stylesheet" href="/css/atom-article.css">`
-	stringContent = stringContent[:beginStyle] + insertHtml + lastPart
+	// 处理html
+	stringContent = stringContent[strings.Index(stringContent, "<body"):]
+	stringContent = stringContent[strings.Index(stringContent, ">")+1:]
+	stringContent = stringContent[:strings.LastIndex(stringContent, "</body>")]
+	stringContent = `<div class="markdown-preview-enhanced" data-use-github-style="true" data-use-github-syntax-theme="true">` + stringContent
+	stringContent = stringContent + `</div>`
 
 	// 处理img链接，将res/img/1.jpg修改为article/uuid/img/1.jpg
 	re, err := regexp.Compile(`<img src=("(?P<first>.+)").*?>`)
@@ -164,13 +159,31 @@ func (p *PushCommand) buildAtomMarkDownHtmlFile(newPath, htmlPath string, uuid s
 		imgUrl = imgUrl[10:]
 		fmt.Println("uuid: ", uuid)
 		fmt.Println("imgUrl: ", imgUrl)
-		if !(strings.HasPrefix(imgUrl, "http://") || strings.HasPrefix(imgUrl, "https://")) {
+		if !(strings.HasPrefix(imgUrl, "http://") || strings.HasPrefix(imgUrl, "https://")) &&
+			strings.HasPrefix(imgUrl, "res/img/") {
 			newUrl := "article/" + uuid + imgUrl[3:]
-			fmt.Println("imgUrl: ", imgUrl)
-			fmt.Println("newUrl: ", newUrl)
 			stringContent = strings.Replace(stringContent, imgUrl, newUrl, -1)
 		}
 	}
+
+	// 处理其他链接
+	re, err = regexp.Compile(`src=("(?P<first>.+)").*?>`)
+	if err != nil {
+		fmt.Println("err: ", err.Error())
+		return nil
+	}
+	allOtherSrc := re.FindAllString(stringContent, -1)
+	for _, otherUrl := range allOtherSrc {
+		otherUrl = otherUrl[5:]
+		fmt.Println("uuid: ", uuid)
+		fmt.Println("otherUrl: ", otherUrl)
+		if !(strings.HasPrefix(otherUrl, "http://") || strings.HasPrefix(otherUrl, "https://")) &&
+			strings.HasPrefix(otherUrl, "res/other/") {
+			newUrl := "article/" + uuid + otherUrl[3:]
+			stringContent = strings.Replace(stringContent, otherUrl, newUrl, -1)
+		}
+	}
+
 	// 处理a href链接
 	re, err = regexp.Compile(`<a href="(.*)".*?>`)
 	if err != nil {
@@ -180,7 +193,8 @@ func (p *PushCommand) buildAtomMarkDownHtmlFile(newPath, htmlPath string, uuid s
 	allHrefSrc := re.FindAllString(stringContent, -1)
 	for _, hrefUrl := range allHrefSrc {
 		hrefUrl = hrefUrl[9:]
-		if !(strings.HasPrefix(hrefUrl, "http://") || strings.HasPrefix(hrefUrl, "https://")) {
+		if !(strings.HasPrefix(hrefUrl, "http://") || strings.HasPrefix(hrefUrl, "https://")) &&
+			strings.HasPrefix(hrefUrl, "res/other/") {
 			newUrl := "article/" + uuid + hrefUrl[3:]
 			stringContent = strings.Replace(stringContent, hrefUrl, newUrl, -1)
 		}

@@ -75,7 +75,7 @@ func (n *NewCommand) newBlog(sort string, name string) error {
 	blogInfoFile.WriteString(blogInfo)
 	blogInfoFile.Close()
 	// new all res folder
-	folderList := []string{"res", "res/img", "res/css", "res/html", "res/font", "res/other", "res/js", "res/video"}
+	folderList := []string{"res", "res/img", "res/css", "res/html", "res/font", "res/other", "res/js"}
 	for _, folder := range folderList {
 		currentPath := filepath.Join(localBlogPath, folder)
 		fmt.Println("current: ", currentPath)

@@ -37,7 +37,7 @@ func (a *DeleteCommand) Run(arguments ...string) (bool, error) {
 		if err != nil {
 			return false, nil
 		}
-		a.deleteLocal(blogId)
+		a.deleteServer(blogId)
 	default:
 		return false, errors.New("param error")
 	}
