@@ -1,6 +1,7 @@
 package net
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"framework/base/json"
@@ -127,6 +128,7 @@ func (b *BaseHttpProtocol) getUrl() string {
 		urlString = "https://"
 	}
 	urlString += b.Host + b.Path + "?" + urlParams
+	fmt.Println("url: ", urlString)
 	return urlString
 }
 
@@ -197,7 +199,9 @@ func (b *BaseHttpProtocol) StartTimeOutTimer(delay time.Duration) {
 func (b *BaseHttpProtocol) startRequest(httpRequest *http.Request) {
 	b.stop = false
 	f := func(httpRequest *http.Request, Delegate HttpProgressDelegate) {
-		tr := &http.Transport{}
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
 		client := &http.Client{Transport: tr}
 		var err error = nil
 		response, err := client.Do(httpRequest)

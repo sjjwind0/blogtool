@@ -287,3 +287,7 @@ func (p *PushCommand) pushBlog(index int) {
 		}
 	})
 }
+
+func (p *PushCommand) pushPlugin() {
+
+}
